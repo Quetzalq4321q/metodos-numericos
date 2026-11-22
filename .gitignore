@@ -3,3 +3,7 @@
 trayectoria-db.php
 ~$*.pptx
 *.zip
+/tmp/
+/output/pdf/*.aux
+/output/pdf/*.log
+/output/pdf/*.out

@@ -1,0 +1,193 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage{lmodern,microtype,amsmath,amssymb,booktabs,tabularx,array}
+\usepackage[a4paper,margin=23mm,headheight=15pt]{geometry}
+\usepackage{xcolor,fancyhdr,hyperref,qrcode}
+\definecolor{Navy}{HTML}{10234C}
+\definecolor{Blue}{HTML}{1949D1}
+\definecolor{Teal}{HTML}{007F78}
+\definecolor{Slate}{HTML}{536483}
+\definecolor{Pale}{HTML}{EFF5FF}
+\hypersetup{colorlinks=true,linkcolor=Blue,urlcolor=Blue,
+  pdftitle={Trayectoria - Informe de Métodos Numéricos},
+  pdfauthor={Gabriel Andre Pajuelo Aranibar, Armando Manuel Enriquez Eguiluz, Victor Gabriel Lupinta Flores}}
+\urlstyle{same}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily\color{Slate}TRAYECTORIA}
+\fancyhead[R]{\small\sffamily\color{Slate}MÉTODOS NUMÉRICOS}
+\fancyfoot[R]{\small\sffamily\color{Slate}\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{.6em}
+\setlength{\emergencystretch}{2em}
+\setlength{\jot}{5pt}
+\renewcommand{\arraystretch}{1.23}
+\newcommand{\topic}[2]{\section*{\sffamily\color{Navy}#1\enspace #2}\vspace{-.35em}}
+\newcommand{\subtopic}[1]{\subsection*{\sffamily\color{Blue}#1}}
+\newcommand{\callout}[1]{\noindent\colorbox{Pale}{\parbox{\dimexpr\linewidth-2\fboxsep\relax}{\vspace{.45em}\hspace{.5em}\begin{minipage}{\dimexpr\linewidth-1em\relax}#1\end{minipage}\vspace{.45em}}}}
+
+\begin{document}
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+\sffamily
+{\color{Blue}\bfseries CURSO DE MÉTODOS NUMÉRICOS}\par
+\vspace{3.05cm}
+{\fontsize{58}{62}\selectfont\bfseries\color{Navy} Trayectoria\par}
+\vspace{.45cm}
+{\Large\color{Navy} Ecuaciones diferenciales de primer orden\par}
+{\large\color{Slate} Euler explícito y Runge--Kutta de cuarto orden\par}
+\vspace{2cm}
+{\bfseries\color{Blue} Integrantes}\par
+Gabriel Andre Pajuelo Aranibar\par
+Armando Manuel Enriquez Eguiluz\par
+Victor Gabriel Lupinta Flores\par
+\vfill
+\noindent\begin{minipage}[c]{.69\linewidth}
+{\large\bfseries\color{Navy} Calculadora y código fuente}\par
+\href{https://nexlabsgroup.com/metodos-numericos/}{nexlabsgroup.com/metodos-numericos/}\par
+\href{https://github.com/Quetzalq4321q/metodos-numericos}{Repositorio público en GitHub}\par
+{\small\color{Slate}22 de noviembre de 2026}
+\end{minipage}\hfill
+\begin{minipage}[c]{.22\linewidth}\centering
+\href{https://nexlabsgroup.com/metodos-numericos/}{\color{black}\qrcode[nolink,height=26mm,level=M]{https://nexlabsgroup.com/metodos-numericos/}}\par
+\small Abrir la web
+\end{minipage}
+\end{titlepage}
+\hypersetup{pageanchor=true}
+
+\topic{01}{Fundamento y procedimiento}
+\textbf{Objetivo.} Aproximar la solución de $y'=f(x,y)$ con condición inicial $y(x_0)=y_0$. La calculadora permite alternar entre Euler, RK4 y una comparación de ambos métodos.
+
+\subtopic{División del intervalo}
+Si se indica una magnitud de paso $h>0$, el número de iteraciones es el entero superior de la longitud del intervalo dividida por $h$. El último paso se ajusta cuando el intervalo no es un múltiplo de $h$. Si se indica directamente el entero $N$, la aplicación calcula la magnitud de paso.
+\[
+ N=\left\lceil\frac{|x_{\mathrm{final}}-x_0|}{h}\right\rceil,
+ \qquad h=\frac{|x_{\mathrm{final}}-x_0|}{N},
+ \qquad h_n=x_{n+1}-x_n.
+\]
+El paso efectivo $h_n$ es negativo al recorrer el intervalo hacia un valor menor de $x$.
+
+\subtopic{Euler explícito}
+Euler usa la pendiente al comienzo del paso para aproximar el incremento de $y$.
+\[
+ k_1=f(x_n,y_n),\qquad y_{n+1}=y_n+h_n k_1.
+\]
+
+\subtopic{Runge--Kutta clásico de cuarto orden}
+RK4 evalúa cuatro pendientes. Las dos pendientes intermedias tienen peso doble en el promedio.
+\begin{align*}
+ k_1 &= f(x_n,y_n),\\
+ k_2 &= f\!\left(x_n+\tfrac{h_n}{2},y_n+\tfrac{h_nk_1}{2}\right),\\
+ k_3 &= f\!\left(x_n+\tfrac{h_n}{2},y_n+\tfrac{h_nk_2}{2}\right),\\
+ k_4 &= f(x_n+h_n,y_n+h_nk_3),\\
+ y_{n+1} &= y_n+\frac{h_n}{6}(k_1+2k_2+2k_3+k_4).
+\end{align*}
+\callout{Para problemas suficientemente regulares y dentro de un régimen de convergencia, Euler tiene error global $O(h)$ y RK4 tiene error global $O(h^4)$. Euler usa una evaluación de $f$ por paso y RK4 usa cuatro.}
+
+\newpage
+\topic{02}{Ejemplo resuelto y comparación}
+\textbf{Planteamiento.} Sea $y'=x+y$, con $y(0)=1$, $x_{\mathrm{final}}=1$ y $h=0{,}2$. Se necesitan $N=\lceil 1/0{,}2\rceil=5$ iteraciones. La solución exacta es $y(x)=2e^x-x-1$, que se verifica por derivación y por la condición inicial.
+
+\subtopic{Primera iteración}
+Euler obtiene $k_1=f(0,1)=1$ y por tanto $y_1=1+0{,}2\cdot1=1{,}2$. RK4 calcula:
+\begin{align*}
+ k_1 &= f(0\,;\,1)=1, & k_2 &= f(0{,}1\,;\,1{,}1)=1{,}2,\\
+ k_3 &= f(0{,}1\,;\,1{,}12)=1{,}22, & k_4 &= f(0{,}2\,;\,1{,}244)=1{,}444,\\[.4em]
+ y_1 &=1+\frac{0{,}2}{6}(1+2\cdot1{,}2+2\cdot1{,}22+1{,}444)=1{,}2428.&&
+\end{align*}
+
+\subtopic{Tabla de aproximaciones}
+\begin{center}
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+ $n$ & $x_n$ & Euler & RK4 \\
+\midrule
+ 0 & $0{,}0$ & $1{,}000000$ & $1{,}000000$ \\
+ 1 & $0{,}2$ & $1{,}200000$ & $1{,}242800$ \\
+ 2 & $0{,}4$ & $1{,}480000$ & $1{,}583636$ \\
+ 3 & $0{,}6$ & $1{,}856000$ & $2{,}044213$ \\
+ 4 & $0{,}8$ & $2{,}347200$ & $2{,}651042$ \\
+ 5 & $1{,}0$ & $2{,}976640$ & $3{,}436502$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+El valor exacto en $x=1$ es aproximadamente $3{,}43656366$. Los errores absolutos son $0{,}45992366$ para Euler y $0{,}00006139$ para RK4.
+
+\subtopic{Efecto de reducir el paso}
+Para el segundo problema $y'=y$ con $y(0)=1$, se compara $y(1)$ con $e$:
+\begin{center}
+\begin{tabular}{@{}rrr@{}}
+\toprule
+ $h$ & Error absoluto de Euler & Error absoluto de RK4 \\
+\midrule
+ $0{,}20$ & $2{,}300\times10^{-1}$ & $3{,}069\times10^{-5}$ \\
+ $0{,}10$ & $1{,}245\times10^{-1}$ & $2{,}084\times10^{-6}$ \\
+ $0{,}05$ & $6{,}498\times10^{-2}$ & $1{,}358\times10^{-7}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+De $0{,}10$ a $0{,}05$ el error se reduce aproximadamente $1{,}92$ veces con Euler y $15{,}35$ veces con RK4.
+
+\newpage
+\topic{03}{Arquitectura y configuración}
+El navegador valida el planteamiento, evalúa la expresión con un analizador de funciones permitidas y resuelve hasta 1\,000 iteraciones. La interfaz dibuja la curva, muestra la tabla y genera el desarrollo con MathML. El icono principal y los controles de tema y teclado usan SVG.
+
+\begin{tabularx}{\linewidth}{@{}>{\ttfamily}l X@{}}
+\toprule
+ \normalfont\textbf{Módulo} & \textbf{Responsabilidad} \\
+\midrule
+ app.js & Coordina el formulario, los casos de ejemplo y el resultado activo. \\
+ solver.js & Analiza $f(x,y)$ y ejecuta Euler y RK4. \\
+ ui.js, controls.js & Formato, creación de elementos, tema y teclado. \\
+ plot.js & Curvas, escala, ejes y redibujado. \\
+ results.js, math-view.js & Tabla, navegación y fórmulas de cada iteración. \\
+ history-view.js & Visualiza el historial y coordina el servidor y el respaldo. \\
+ history-local.js & Guarda hasta 20 cálculos en IndexedDB por navegador y origen. \\
+ history.php & Valida solicitudes y accede a MySQL con PDO. \\
+\bottomrule
+\end{tabularx}
+
+\subtopic{Opciones de ejecución}
+\begin{enumerate}
+ \item \textbf{Solo navegador.} Abrir la web publicada o servir la carpeta por HTTP. Los cálculos y el historial local funcionan sin configurar MySQL cuando el navegador permite IndexedDB.
+ \item \textbf{PHP con MySQL.} Habilitar PDO MySQL. Crear la base y un usuario con permisos \texttt{CREATE}, \texttt{SELECT} e \texttt{INSERT}. Copiar \texttt{config.example.php} como \texttt{trayectoria-db.php} fuera de la raíz web y completar el servidor, la base, el usuario y la contraseña. Se puede indicar una ruta externa mediante \texttt{TRAYECTORIA\_CONFIG}.
+ \item \textbf{Comprobación.} Abrir la web, guardar el ejemplo lineal y recargar. La etiqueta de cada registro indica si quedó en MySQL o en el navegador. El servidor crea la tabla del historial al conectar con la base.
+\end{enumerate}
+
+\callout{En el alojamiento actual, MySQL está pendiente de configuración. IndexedDB permite conservar los cálculos en el navegador ya probado. Los registros locales se consultan en el mismo navegador y origen.}
+
+\newpage
+\topic{04}{Validación y reproducción}
+El comando \texttt{node --test tests/solver.test.cjs} ejecuta 29 pruebas numéricas y de validación. La siguiente matriz resume configuraciones representativas.
+
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{.29\linewidth} X@{}}
+\toprule
+\textbf{Configuración} & \textbf{Resultado esperado y verificado} \\
+\midrule
+Ejemplo lineal & Cinco pasos con $h=0{,}2$, pendientes de la primera iteración y valores finales contrastados con una recurrencia independiente. \\
+Métodos por separado y en comparación & 1\,000 pasos y 1\,001 filas contando la condición inicial. Solo se calculan las series seleccionadas. \\
+Paso no divisor & De $0$ a $1$ con $h=0{,}3$ salen cuatro iteraciones. El último paso se ajusta a $0{,}1$. \\
+Sentido inverso & El recorrido de $0$ a $-1$ usa pasos efectivos negativos y termina en $-1$. \\
+Pendiente constante, nula y oscilatoria & Se comprueban una solución lineal, un valor que permanece fijo y la aproximación a $\sin(x)$. \\
+Límites y errores & Rechazo de intervalos sin longitud, pasos inválidos, más de 1\,000 pasos, métodos desconocidos y evaluaciones fuera del dominio. \\
+\bottomrule
+\end{tabularx}
+
+\subtopic{Demostración de la aplicación}
+\begin{enumerate}
+ \item Pulsa \textbf{Lineal} para recuperar el ejemplo de la sección 02. Calcula en modo \textbf{Comparar ambos} y pasa a la primera iteración para identificar $k_1$ y las cuatro etapas de RK4.
+ \item Cambia $h$ a $0{,}3$ y observa el ajuste del último paso. Luego selecciona \textbf{Cantidad de iteraciones} e introduce $N=4$ para obtener un paso de $0{,}25$.
+ \item Guarda el ejercicio, recarga y ábrelo desde \textbf{Historial}. El ejercicio debe conservar los parámetros y la elección de método.
+\end{enumerate}
+
+\subtopic{Conclusión}
+Ambos métodos llegan al extremo solicitado y permiten seguir cada sustitución. En los casos ensayados, RK4 obtiene menor error con el mismo paso a cambio de cuatro evaluaciones por iteración. La comparación se puede reproducir en la web y con las pruebas del repositorio.
+
+\subtopic{Referencias}
+University of Waterloo. \href{https://www.math.uwaterloo.ca/~jjwest/course_notes/AMath250_Course_Notes.pdf}{\textit{AMath 250 Course Notes}}. Método de Euler, Runge--Kutta y orden de convergencia.\par
+W3C. \href{https://www.w3.org/TR/mathml-core/}{\textit{MathML Core}}. Estructura de las expresiones matemáticas del navegador.
+\end{document}

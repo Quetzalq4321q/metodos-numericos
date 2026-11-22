@@ -5,19 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Resuelve ecuaciones diferenciales de primer orden con Euler y Runge–Kutta paso a paso.">
   <title>Trayectoria · Ecuaciones diferenciales</title>
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="icon" href="icon.svg?v=5" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=5">
   <script src="solver.js?v=3" defer></script>
   <script src="history-local.js?v=2" defer></script>
   <script src="math-view.js?v=3" defer></script>
-  <script src="app.js?v=3" defer></script>
+  <script src="ui.js?v=5" defer></script>
+  <script src="controls.js?v=5" defer></script>
+  <script src="plot.js?v=5" defer></script>
+  <script src="results.js?v=5" defer></script>
+  <script src="history-view.js?v=5" defer></script>
+  <script src="app.js?v=5" defer></script>
 </head>
 <body>
   <header class="topbar">
     <div class="wrap top-inner">
-      <a class="brand" href="#inicio"><img src="icon.svg" width="36" height="36" alt="">Trayectoria</a>
+      <a class="brand" href="#inicio"><img src="icon.svg?v=5" width="40" height="40" alt="">Trayectoria</a>
       <nav aria-label="Secciones"><a href="#inicio">Calculadora</a><a href="#guia">Fórmulas</a><a href="#historial">Historial</a></nav>
-      <button type="button" id="theme" class="theme-button" aria-label="Modo oscuro" aria-pressed="false"><span aria-hidden="true" id="theme-icon">☾</span><span id="theme-label" aria-hidden="true">Oscuro</span></button>
+      <button type="button" id="theme" class="theme-button" aria-label="Modo oscuro" aria-pressed="false">
+        <svg id="theme-moon" class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.1A8.4 8.4 0 0 1 8.9 4 8.4 8.4 0 1 0 20 15.1Z"/></svg>
+        <svg id="theme-sun" class="button-icon" viewBox="0 0 24 24" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4 19 5"/></svg>
+        <span id="theme-label" aria-hidden="true">Oscuro</span>
+      </button>
     </div>
   </header>
   <main class="wrap" id="inicio">
@@ -27,7 +36,7 @@
         <h2 id="config-title">Planteamiento</h2>
         <p class="muted">Problema de valor inicial · y′ = f(x, y)</p>
         <form id="problem">
-          <div class="equation-label"><label for="equation">Función f(x, y)</label><button type="button" id="keypad-toggle" class="outline compact" aria-expanded="false" aria-controls="keypad"><span aria-hidden="true">⌨</span> Teclado</button></div>
+          <div class="equation-label"><label for="equation">Función f(x, y)</label><button type="button" id="keypad-toggle" class="outline compact icon-button" aria-expanded="false" aria-controls="keypad"><svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M7 9h.1m4.9 0h.1m4.9 0h.1M7 13h.1m9.9 0h.1M10 15h4"/></svg>Teclado</button></div>
           <input id="equation" name="equation" value="x + y" maxlength="160" required spellcheck="false" autocomplete="off">
           <div id="keypad" class="keypad" role="group" aria-label="Teclado matemático" hidden>
             <button type="button" data-insert="7">7</button><button type="button" data-insert="8">8</button><button type="button" data-insert="9">9</button><button type="button" data-insert="/" aria-label="Dividir">÷</button><button type="button" data-insert="x">x</button>
