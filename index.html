@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Resuelve ecuaciones diferenciales de primer orden con Euler y Runge–Kutta paso a paso.">
+  <title>Trayectoria · Ecuaciones diferenciales</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=2">
+  <script src="solver.js" defer></script>
+  <script src="history-local.js?v=2" defer></script>
+  <script src="app.js?v=2" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap top-inner">
+      <a class="brand" href="#inicio"><img src="icon.svg" width="36" height="36" alt="">Trayectoria</a>
+      <nav aria-label="Secciones"><a href="#inicio">Calculadora</a><a href="#guia">Fórmulas</a><a href="#historial">Historial</a></nav>
+      <button type="button" id="theme" class="theme-button" aria-label="Modo oscuro" aria-pressed="false"><span aria-hidden="true" id="theme-icon">☾</span><span id="theme-label" aria-hidden="true">Oscuro</span></button>
+    </div>
+  </header>
+  <main class="wrap" id="inicio">
+    <header class="hero"><p class="eyebrow">MÉTODOS NUMÉRICOS</p><h1>Ecuaciones<br>diferenciales<span>.</span></h1><p>Resuelve una ecuación de primer orden y sigue cada iteración de Euler y Runge–Kutta.</p></header>
+    <div class="workspace">
+      <section class="card configuration" aria-labelledby="config-title">
+        <h2 id="config-title">Planteamiento</h2>
+        <p class="muted">Problema de valor inicial · y′ = f(x, y)</p>
+        <form id="problem">
+          <div class="equation-label"><label for="equation">Función f(x, y)</label><button type="button" id="keypad-toggle" class="outline compact" aria-expanded="false" aria-controls="keypad"><span aria-hidden="true">⌨</span> Teclado</button></div>
+          <input id="equation" name="equation" value="x + y" maxlength="160" required spellcheck="false" autocomplete="off">
+          <div id="keypad" class="keypad" role="group" aria-label="Teclado matemático" hidden>
+            <button type="button" data-insert="7">7</button><button type="button" data-insert="8">8</button><button type="button" data-insert="9">9</button><button type="button" data-insert="/" aria-label="Dividir">÷</button><button type="button" data-insert="x">x</button>
+            <button type="button" data-insert="4">4</button><button type="button" data-insert="5">5</button><button type="button" data-insert="6">6</button><button type="button" data-insert="*" aria-label="Multiplicar">×</button><button type="button" data-insert="y">y</button>
+            <button type="button" data-insert="1">1</button><button type="button" data-insert="2">2</button><button type="button" data-insert="3">3</button><button type="button" data-insert="-" aria-label="Restar">−</button><button type="button" data-insert="^" aria-label="Potencia">^</button>
+            <button type="button" data-insert="0">0</button><button type="button" data-insert="." aria-label="Punto decimal">.</button><button type="button" data-insert="(" aria-label="Abrir paréntesis">(</button><button type="button" data-insert="+" aria-label="Sumar">+</button><button type="button" data-insert=")" aria-label="Cerrar paréntesis">)</button>
+            <button type="button" data-function="sin">sin</button><button type="button" data-function="cos">cos</button><button type="button" data-function="exp">exp</button><button type="button" data-function="sqrt">√</button><button type="button" data-insert="pi" aria-label="Pi">π</button>
+            <button type="button" id="keypad-clear" class="keypad-action">Limpiar</button><button type="button" id="keypad-backspace" class="keypad-action">Borrar</button>
+          </div>
+          <p class="hint">Usa <code>*</code> para multiplicar, <code>^</code> para potencias y funciones como <code>sin(x)</code>, <code>exp(x)</code> o <code>sqrt(y)</code>.</p>
+          <div class="fields">
+            <label>x inicial<input name="x0" type="number" step="any" value="0" required></label>
+            <label>y inicial<input name="y0" type="number" step="any" value="1" required></label>
+            <label>x final<input name="end" type="number" step="any" value="1" required></label>
+            <label>Paso h<input name="step" type="number" step="any" value="0.2" required></label>
+          </div>
+          <label for="method">Método</label><select id="method" name="method"><option value="both">Comparar ambos</option><option value="euler">Euler explícito</option><option value="rk4">Runge–Kutta de cuarto orden</option></select>
+          <button class="primary" type="submit">Calcular solución</button>
+          <p id="error" role="alert" hidden></p>
+        </form>
+        <div class="examples"><h3>Cargar un ejemplo</h3><button type="button" data-example="linear">Lineal</button><button type="button" data-example="growth">Crecimiento</button><button type="button" data-example="oscillation">Oscilación</button></div>
+      </section>
+      <section class="card results" id="result" aria-labelledby="result-title" hidden>
+        <div class="result-header"><div><h2 id="result-title">Curva de solución</h2><p class="muted" id="summary" role="status"></p></div><button type="button" class="outline" id="save">Guardar cálculo</button></div>
+        <div id="values" class="values"></div>
+        <canvas id="plot" aria-label="Gráfica de las aproximaciones de y en función de x" role="img"></canvas>
+        <div class="legend" id="legend"></div>
+        <h3 class="table-title">Tabla de iteraciones</h3><div class="table-scroll"><table id="iterations" aria-label="Aproximaciones por iteración"></table></div>
+      </section>
+    </div>
+    <section class="card walkthrough" id="walkthrough" aria-labelledby="walk-title" hidden>
+      <div class="result-header"><div><h2 id="walk-title">Desarrollo paso a paso</h2><p class="muted">Consulta las sustituciones numéricas de cada iteración.</p></div><div class="step-controls"><button type="button" class="outline compact" id="previous-step">Anterior</button><label>Iteración <select id="jump"></select></label><button type="button" class="outline compact" id="next-step">Siguiente</button></div></div>
+      <div id="steps" aria-live="polite"></div>
+    </section>
+    <section class="card guide" id="guia" aria-labelledby="guide-title">
+      <h2 id="guide-title">Cómo se obtiene cada iteración</h2>
+      <p class="muted">Se parte de la condición inicial <strong>(x₀, y₀)</strong>. En cada paso se calcula una nueva aproximación de y y se usa como punto de partida para el siguiente.</p>
+      <div class="formula-grid">
+        <article class="formula euler-formula"><h3>Euler explícito</h3><p>k₁ = f(xₙ, yₙ)<br>yₙ₊₁ = yₙ + hₙ · k₁</p><div>Evalúa la pendiente en el punto actual y multiplica por el paso para estimar cuánto cambia y.</div></article>
+        <article class="formula rk4-formula"><h3>Runge–Kutta (RK4)</h3><p>k₁ = f(xₙ, yₙ)<br>k₂ = f(xₙ + hₙ/2, yₙ + hₙk₁/2)<br>k₃ = f(xₙ + hₙ/2, yₙ + hₙk₂/2)<br>k₄ = f(xₙ + hₙ, yₙ + hₙk₃)<br>yₙ₊₁ = yₙ + hₙ(k₁ + 2k₂ + 2k₃ + k₄)/6</p><div>Combina la pendiente inicial, dos pendientes intermedias y una al final del paso.</div></article>
+      </div>
+      <h3 class="table-title">Número de iteraciones</h3>
+      <p class="guide-copy"><strong>N = ⌈|x final − x inicial| / h⌉</strong>, con h positivo. Por ejemplo, de 0 a 1 con h = 0,3 se hacen cuatro pasos. Los tres primeros miden 0,3 y el último mide 0,1. En las fórmulas, hₙ = xₙ₊₁ − xₙ es el paso efectivo y lleva signo negativo al avanzar hacia un x menor.</p>
+    </section>
+    <section class="card history" id="historial" aria-labelledby="history-title">
+      <div class="result-header"><div><h2 id="history-title">Historial</h2><p class="muted">Vuelve a abrir los cálculos guardados desde este navegador.</p></div><button type="button" class="outline" id="reload">Actualizar</button></div>
+      <p id="history-status" role="status"></p><ul id="history-list"></ul>
+    </section>
+  </main>
+  <footer class="wrap">Trayectoria · Laboratorio de métodos numéricos</footer>
+</body>
+</html>
