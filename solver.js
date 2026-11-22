@@ -1,6 +1,7 @@
 'use strict';
 
 const Ode = (() => {
+  const maxIterations = 1000;
   const functions = {sin:Math.sin, cos:Math.cos, tan:Math.tan, exp:Math.exp,
     log:Math.log, ln:Math.log, sqrt:Math.sqrt, abs:Math.abs};
 
@@ -64,24 +65,32 @@ const Ode = (() => {
     return evaluate;
   }
 
-  function solve({ equation, x0, y0, end, step, method }) {
-    if (![x0,y0,end,step].every(Number.isFinite)) throw new Error('Introduce números finitos en el planteamiento.');
-    if (step <= 0) throw new Error('El tamaño del paso h debe ser positivo.');
-    if (end === x0) throw new Error('Los extremos del intervalo deben ser diferentes.');
+  function solve({ equation, x0, y0, end, step, iterations, method }) {
+    if (![x0,y0,end].every(Number.isFinite)) throw new Error('Introduce números finitos en el planteamiento.');
+    const interval = end-x0;
+    if (interval === 0) throw new Error('Los extremos del intervalo deben ser diferentes.');
+    if (!Number.isFinite(interval)) throw new Error('El intervalo excede el rango numérico.');
     const methods = method === 'both' ? ['euler','rk4'] : [method];
     if (!methods.every(key => ['euler','rk4'].includes(key))) throw new Error('Selecciona un método disponible.');
-    const ratio = Math.abs(end-x0)/step;
-    const count = Math.max(1, Math.ceil(ratio - 8*Number.EPSILON*ratio));
-    if (!Number.isFinite(ratio) || count > 500) throw new Error('El intervalo requiere más de 500 iteraciones. Aumenta el paso h.');
+    const exactCount = iterations !== undefined;
+    if (exactCount && (!Number.isInteger(iterations) || iterations < 1 || iterations > maxIterations)) {
+      throw new Error(`El número de iteraciones debe ser un entero entre 1 y ${maxIterations}.`);
+    }
+    const nominalStep = exactCount ? Math.abs(interval)/iterations : step;
+    if (!Number.isFinite(nominalStep) || nominalStep <= 0) throw new Error('El tamaño del paso h debe ser positivo y finito.');
+    const ratio = Math.abs(interval)/nominalStep;
+    const count = exactCount ? iterations : Math.max(1, Math.ceil(ratio - 8*Number.EPSILON*ratio));
+    if (!Number.isFinite(count) || count > maxIterations) throw new Error(`El intervalo requiere más de ${maxIterations} iteraciones. Aumenta el paso h.`);
     const evaluate = compile(equation);
-    const direction = Math.sign(end-x0);
+    const direction = Math.sign(interval);
     const initial = Object.fromEntries(methods.map(key => [key, { next:y0 }]));
     const rows = [{x:x0, ...initial}];
 
     for (let i = 1; i <= count; i++) {
       const previous = rows[i-1];
       const x = previous.x;
-      const target = i === count ? end : x0 + direction * (i*step);
+      const offset = exactCount ? interval*(i/count) : direction*(i*nominalStep);
+      const target = i === count ? end : x0+offset;
       const h = target-x;
       if (!Number.isFinite(h) || Math.sign(h) !== direction) throw new Error('El paso es demasiado pequeño para la precisión del intervalo.');
       const row = {x:target,h};
@@ -112,7 +121,7 @@ const Ode = (() => {
       }
       rows.push(row);
     }
-    return {methods,rows};
+    return {methods,rows,nominalStep};
   }
 
   return {compile,solve};

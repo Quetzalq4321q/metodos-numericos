@@ -6,10 +6,11 @@
   <meta name="description" content="Resuelve ecuaciones diferenciales de primer orden con Euler y Runge–Kutta paso a paso.">
   <title>Trayectoria · Ecuaciones diferenciales</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=2">
-  <script src="solver.js" defer></script>
+  <link rel="stylesheet" href="styles.css?v=3">
+  <script src="solver.js?v=3" defer></script>
   <script src="history-local.js?v=2" defer></script>
-  <script src="app.js?v=2" defer></script>
+  <script src="math-view.js?v=3" defer></script>
+  <script src="app.js?v=3" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -41,7 +42,9 @@
             <label>x inicial<input name="x0" type="number" step="any" value="0" required></label>
             <label>y inicial<input name="y0" type="number" step="any" value="1" required></label>
             <label>x final<input name="end" type="number" step="any" value="1" required></label>
-            <label>Paso h<input name="step" type="number" step="any" value="0.2" required></label>
+            <label for="resolution">Dividir el intervalo por<select id="resolution"><option value="step">Tamaño de paso</option><option value="iterations">Cantidad de iteraciones</option></select></label>
+            <label id="step-field" class="resolution-field">Paso h<input name="step" type="number" step="any" value="0.2" required></label>
+            <label id="iterations-field" class="resolution-field" hidden>Número de iteraciones<input name="iterations" type="number" min="1" max="1000" step="1" value="5" required disabled></label>
           </div>
           <label for="method">Método</label><select id="method" name="method"><option value="both">Comparar ambos</option><option value="euler">Euler explícito</option><option value="rk4">Runge–Kutta de cuarto orden</option></select>
           <button class="primary" type="submit">Calcular solución</button>
@@ -51,7 +54,7 @@
       </section>
       <section class="card results" id="result" aria-labelledby="result-title" hidden>
         <div class="result-header"><div><h2 id="result-title">Curva de solución</h2><p class="muted" id="summary" role="status"></p></div><button type="button" class="outline" id="save">Guardar cálculo</button></div>
-        <div id="values" class="values"></div>
+        <div id="values" class="values"></div><div id="step-plan" class="step-plan" aria-label="Cálculo de las iteraciones"></div>
         <canvas id="plot" aria-label="Gráfica de las aproximaciones de y en función de x" role="img"></canvas>
         <div class="legend" id="legend"></div>
         <h3 class="table-title">Tabla de iteraciones</h3><div class="table-scroll"><table id="iterations" aria-label="Aproximaciones por iteración"></table></div>
@@ -65,11 +68,12 @@
       <h2 id="guide-title">Cómo se obtiene cada iteración</h2>
       <p class="muted">Se parte de la condición inicial <strong>(x₀, y₀)</strong>. En cada paso se calcula una nueva aproximación de y y se usa como punto de partida para el siguiente.</p>
       <div class="formula-grid">
-        <article class="formula euler-formula"><h3>Euler explícito</h3><p>k₁ = f(xₙ, yₙ)<br>yₙ₊₁ = yₙ + hₙ · k₁</p><div>Evalúa la pendiente en el punto actual y multiplica por el paso para estimar cuánto cambia y.</div></article>
-        <article class="formula rk4-formula"><h3>Runge–Kutta (RK4)</h3><p>k₁ = f(xₙ, yₙ)<br>k₂ = f(xₙ + hₙ/2, yₙ + hₙk₁/2)<br>k₃ = f(xₙ + hₙ/2, yₙ + hₙk₂/2)<br>k₄ = f(xₙ + hₙ, yₙ + hₙk₃)<br>yₙ₊₁ = yₙ + hₙ(k₁ + 2k₂ + 2k₃ + k₄)/6</p><div>Combina la pendiente inicial, dos pendientes intermedias y una al final del paso.</div></article>
+        <article class="formula euler-formula"><h3>Euler explícito</h3><div id="guide-euler" class="math-stack"></div><div>Evalúa la pendiente en el punto actual y multiplica por el paso para estimar cuánto cambia y.</div></article>
+        <article class="formula rk4-formula"><h3>Runge–Kutta (RK4)</h3><div id="guide-rk4" class="math-stack"></div><div>Combina la pendiente inicial, dos pendientes intermedias y una al final del paso.</div></article>
       </div>
       <h3 class="table-title">Número de iteraciones</h3>
-      <p class="guide-copy"><strong>N = ⌈|x final − x inicial| / h⌉</strong>, con h positivo. Por ejemplo, de 0 a 1 con h = 0,3 se hacen cuatro pasos. Los tres primeros miden 0,3 y el último mide 0,1. En las fórmulas, hₙ = xₙ₊₁ − xₙ es el paso efectivo y lleva signo negativo al avanzar hacia un x menor.</p>
+      <div class="math-stack" id="guide-count"></div>
+      <p class="guide-copy">Con un paso positivo de 0,3 entre 0 y 1, se hacen cuatro pasos. Los tres primeros miden 0,3 y el último mide 0,1. Si das <var>N</var> directamente, la calculadora reparte el intervalo en <var>N</var> pasos. En los métodos, <var>h</var><sub>n</sub> es el paso efectivo y lleva signo negativo al avanzar hacia un <var>x</var> menor.</p>
     </section>
     <section class="card history" id="historial" aria-labelledby="history-title">
       <div class="result-header"><div><h2 id="history-title">Historial</h2><p class="muted">Vuelve a abrir los cálculos guardados desde este navegador.</p></div><button type="button" class="outline" id="reload">Actualizar</button></div>

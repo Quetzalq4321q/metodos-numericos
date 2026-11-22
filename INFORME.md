@@ -8,6 +8,8 @@ Resolver y visualizar problemas de valor inicial de primer orden de la forma `y�
 
 Para un tamaño de paso positivo `h` y extremos distintos, el número de iteraciones es `N = ⌈|x final − x₀|/h⌉`. El motor recorre el intervalo en la dirección del extremo final y ajusta el último paso para llegar a ese extremo. Cada fórmula usa `hₙ = xₙ₊₁ − xₙ`. Por ejemplo, de `0` a `1` con `h = 0,3` se obtienen los puntos `0`, `0,3`, `0,6`, `0,9` y `1`.
 
+Si se indica un número exacto de iteraciones `N`, la calculadora divide la longitud del intervalo entre `N` para hallar el paso. Por ejemplo, al solicitar cuatro iteraciones entre `0` y `1`, se obtiene `h = 0,25`. La interfaz muestra la operación aplicada junto a los resultados.
+
 ### Euler explícito
 
 ```text
@@ -43,6 +45,6 @@ La solución exacta para este ejemplo es `y(x) = 2eˣ − x − 1`. Tras cinco i
 
 ## Implementación y alcance
 
-El navegador analiza expresiones aritméticas con las variables `x` e `y`, constantes y funciones matemáticas admitidas, y construye la tabla y la gráfica. La interfaz valida los parámetros, reporta evaluaciones fuera del dominio y limita cada cálculo a 500 iteraciones. Los valores se calculan con aritmética de punto flotante y se redondean al mostrarlos.
+El navegador analiza expresiones aritméticas con las variables `x` e `y`, constantes y funciones matemáticas admitidas, y construye la tabla y la gráfica. La guía y el desarrollo usan MathML para representar fracciones y subíndices. La interfaz valida los parámetros, reporta evaluaciones fuera del dominio y limita cada cálculo a 1.000 iteraciones. Los valores se calculan con aritmética de punto flotante y se redondean al mostrarlos.
 
 PHP guarda en MySQL los parámetros necesarios para reproducir cada cálculo. Una cookie del navegador identifica el historial y el servidor consulta MySQL con sentencias preparadas. Si el servidor no puede guardar, la web conserva el ejercicio en IndexedDB de ese navegador. El historial identifica el origen de cada registro. Los cálculos y los temas funcionan en el navegador incluso si el almacenamiento está desactivado.

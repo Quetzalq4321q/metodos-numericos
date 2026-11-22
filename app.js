@@ -2,6 +2,7 @@
 
 const byId = id => document.getElementById(id);
 const form = byId('problem');
+const resolution = byId('resolution');
 const labels = {euler:'Euler explícito',rk4:'Runge–Kutta (RK4)'};
 const seriesColor = key => `var(--${key})`;
 const examples = {
@@ -138,36 +139,47 @@ function renderStep() {
   byId('previous-step').disabled = index === 1;
   byId('next-step').disabled = index === current.rows.length-1;
   const cards = element('div',undefined,'formula-grid');
-  const h = fmt(row.h);
   for (const key of current.methods) {
     const {y,stages,next} = row[key];
     const card = element('article',undefined,'formula');
     card.style.setProperty('--series',seriesColor(key));
-    card.append(element('h3',labels[key]),element('p',`yₙ = ${fmt(y)}`));
-    const subscripts = ['₁','₂','₃','₄'];
-    const formulas = ['f(xₙ, yₙ)','f(xₙ + h/2, yₙ + hk₁/2)','f(xₙ + h/2, yₙ + hk₂/2)','f(xₙ + h, yₙ + hk₃)'];
-    stages.forEach(({x,y:stageY,value},i) => card.append(element('p',`k${subscripts[i]} = ${formulas[i]} = f(${fmt(x)}, ${fmt(stageY)}) = ${fmt(value)}`)));
-    const k = stages.map(stage => `(${fmt(stage.value)})`);
-    const update = key==='euler'
-      ? `yₙ₊₁ = yₙ + hk₁ = ${fmt(y)} + (${h}) × ${k[0]}`
-      : `yₙ₊₁ = yₙ + h(k₁ + 2k₂ + 2k₃ + k₄)/6 = ${fmt(y)} + (${h}) × (${k[0]} + 2 × ${k[1]} + 2 × ${k[2]} + ${k[3]})/6`;
-    card.append(element('p',`${update} ≈ ${fmt(next)}`));
+    card.append(element('h3',labels[key]), MathView.initialY(fmt(y)));
+    stages.forEach(({x,y:stageY,value},i) => {
+      const group = element('div',undefined,'slope-stage');
+      group.append(MathView.slopeFormula(i+1),MathView.stageValue(i+1,fmt(x),fmt(stageY),fmt(value)));
+      card.append(group);
+    });
+    const update = element('div',undefined,'formula-update');
+    update.append(
+      element('h4','Nueva aproximación'),
+      MathView.updateFormula(key),
+      ...MathView.substitution(key,fmt(y),fmt(row.h),stages.map(stage=>fmt(stage.value)),fmt(next)),
+    );
+    card.append(update);
     cards.append(card);
   }
   byId('steps').replaceChildren(
-    element('p',`xₙ₊₁ = xₙ + hₙ = ${fmt(previous.x)} + (${h}) ≈ ${fmt(row.x)}`, 'step-context'),
+    MathView.advanceX(fmt(previous.x),fmt(row.h),fmt(row.x)),
     element('p',`Para las pendientes se evalúa f(x, y) = ${current.input.equation} en los puntos indicados.`, 'step-context'),
     cards,
   );
 }
 
 function render() {
-  const {methods,rows} = current;
+  const {methods,rows,nominalStep,input} = current;
   const count = rows.length-1;
   const last = rows.at(-1);
+  const stepWasAdjusted = Math.abs(Math.abs(last.h)-nominalStep) > Math.abs(nominalStep)*1e-12;
   byId('result').hidden = false;
   byId('walkthrough').hidden = false;
   byId('summary').textContent = `${count} ${count === 1 ? 'iteración' : 'iteraciones'} · y(${fmt(last.x)}) aproximado`;
+  const stepping = input.iterations === undefined
+    ? MathView.actualCount(String(input.x0),String(input.end),String(nominalStep),count)
+    : MathView.actualStep(fmt(input.x0),fmt(input.end),count,fmt(nominalStep));
+  byId('step-plan').replaceChildren(stepping);
+  if (stepWasAdjusted && input.iterations === undefined) {
+    byId('step-plan').append(element('p',`El último paso se ajusta a ${fmt(last.h)} para alcanzar el extremo del intervalo.`));
+  }
   const metrics = methods.map(key => {
     const metric = element('div',undefined,'metric');
     metric.style.setProperty('--series',seriesColor(key));
@@ -203,7 +215,7 @@ function render() {
 function calculate() {
   const input = Object.fromEntries(new FormData(form));
   input.equation = input.equation.trim();
-  for (const field of ['x0','y0','end','step']) input[field] = input[field] === '' ? NaN : Number(input[field]);
+  for (const field of ['x0','y0','end',resolution.value]) input[field] = input[field] === '' ? NaN : Number(input[field]);
   try {
     current = {input,...Ode.solve(input)};
     byId('error').hidden = true;
@@ -217,8 +229,20 @@ function calculate() {
   }
 }
 
+function syncResolution() {
+  for (const kind of ['step','iterations']) {
+    const inactive = kind !== resolution.value;
+    byId(`${kind}-field`).hidden = inactive;
+    form.elements.namedItem(kind).disabled = inactive;
+  }
+}
+
 function load(input) {
-  for (const [name,value] of Object.entries(input)) form.elements.namedItem(name).value=value;
+  resolution.value = input.iterations === undefined ? 'step' : 'iterations';
+  syncResolution();
+  for (const name of ['equation','x0','y0','end',resolution.value,'method']) {
+    if (input[name] !== undefined) form.elements.namedItem(name).value = input[name];
+  }
   calculate();
 }
 
@@ -282,11 +306,20 @@ byId('save').addEventListener('click',async () => {
 });
 
 form.addEventListener('submit',event=>{ event.preventDefault(); calculate(); });
+resolution.addEventListener('change',syncResolution);
 for (const button of document.querySelectorAll('[data-example]')) button.addEventListener('click',()=>load(examples[button.dataset.example]));
 byId('jump').addEventListener('change',renderStep);
 byId('previous-step').addEventListener('click', () => { byId('jump').selectedIndex--; renderStep(); });
 byId('next-step').addEventListener('click', () => { byId('jump').selectedIndex++; renderStep(); });
 byId('reload').addEventListener('click',()=>history());
 new ResizeObserver(draw).observe(byId('plot'));
+for (const [method,stages] of [['euler',1],['rk4',4]]) {
+  byId(`guide-${method}`).append(
+    ...Array.from({length:stages},(_,index)=>MathView.slopeFormula(index+1)),
+    MathView.updateFormula(method),
+  );
+}
+byId('guide-count').append(MathView.countFormula(),MathView.stepFormula(),MathView.signedStep());
+syncResolution();
 calculate();
 history();

@@ -32,17 +32,31 @@ if ($method === 'POST') {
         !in_array($input['method'] ?? null, ['euler', 'rk4', 'both'], true)) {
         respond(422, ['error' => 'El cálculo contiene datos no válidos.']);
     }
-    foreach (['x0', 'y0', 'end', 'step'] as $key) {
+    foreach (['x0', 'y0', 'end'] as $key) {
         $value = $input[$key] ?? null;
         if ((!is_int($value) && !is_float($value)) || !is_finite((float) $value)) {
             respond(422, ['error' => 'El planteamiento requiere números finitos.']);
         }
     }
-    if ($input['step'] <= 0 || (float) $input['end'] === (float) $input['x0'] ||
-        abs($input['end'] - $input['x0']) / $input['step'] > 500.000000000001) {
-        respond(422, ['error' => 'El paso y el intervalo están fuera del rango admitido.']);
+    $interval = abs($input['end'] - $input['x0']);
+    if ($interval <= 0 || !is_finite((float) $interval)) {
+        respond(422, ['error' => 'El intervalo está fuera del rango admitido.']);
     }
-    $input = array_intersect_key($input, array_flip(['equation', 'method', 'x0', 'y0', 'end', 'step']));
+    if (array_key_exists('iterations', $input)) {
+        $parameter = 'iterations';
+        $count = $input[$parameter];
+        if (!is_int($count) || $count < 1 || $count > 1000 || $interval / $count <= 0) {
+            respond(422, ['error' => 'El número de iteraciones debe ser un entero entre 1 y 1000.']);
+        }
+    } else {
+        $parameter = 'step';
+        $step = $input[$parameter] ?? null;
+        if ((!is_int($step) && !is_float($step)) || !is_finite((float) $step) ||
+            $step <= 0 || $interval / $step > 1000.000000000002) {
+            respond(422, ['error' => 'El paso está fuera del rango admitido.']);
+        }
+    }
+    $input = array_intersect_key($input, array_flip(['equation', 'method', 'x0', 'y0', 'end', $parameter]));
 }
 
 // The configuration lives outside the web root and is never served to visitors.
