@@ -2,7 +2,7 @@
 
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
-const {compile, solve} = require('../solver.js');
+const {compile, solve, compareReference} = require('../solver.js');
 
 const linear = {equation:'x + y',x0:0,y0:1,end:1,step:.2,method:'both'};
 function close(actual, expected, tolerance = 1e-12) {
@@ -58,6 +58,28 @@ test('una pendiente nula conserva el valor inicial', () => {
     assert.equal(euler.next,-7);
     assert.equal(rk4.next,-7);
   }
+});
+
+test('el error absoluto del ejemplo lineal usa la solución exacta en cada fila', () => {
+  const solution = solve(linear);
+  const comparison = compareReference(solution,'2*exp(x) - x - 1',1);
+  assert.deepEqual(comparison[0],{reference:1,errors:{euler:0,rk4:0}});
+  close(comparison[1].reference,2*Math.exp(.2)-1.2);
+  close(comparison.at(-1).errors.euler,2*Math.E-2-2.97664);
+  close(comparison.at(-1).errors.rk4,2*Math.E-2-solution.rows.at(-1).rk4.next);
+});
+
+test('la comparación sirve con una sola serie y recorrido inverso', () => {
+  const result = solve({...linear,equation:'2',end:-1,method:'euler'});
+  const comparison = compareReference(result,'1 + 2*x',1);
+  assert.deepEqual(comparison.at(-1),{reference:-1,errors:{euler:0}});
+});
+
+test('la referencia rechaza y, una condición inicial incorrecta y valores fuera del dominio', () => {
+  const result = solve(linear);
+  assert.throws(()=>compareReference(result,'x+y',1),/solo de x/);
+  assert.throws(()=>compareReference(result,'exp(x) + 1',1),/x inicial/);
+  assert.throws(()=>compareReference(result,'1/(1-x)',1),/fila 5/);
 });
 
 test('crecimiento exponencial: al dividir h por dos se observa la convergencia esperada', () => {

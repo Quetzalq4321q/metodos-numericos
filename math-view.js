@@ -73,6 +73,9 @@ const MathView = (() => {
     return [line(next('y'),op('≈'),value(yNow),plus(),factor(step),times(),delta),line(next('y'),op('≈'),value(result))];
   }
 
+  const errorIndex = () => next('E');
+  const referenceAt = argument => row(id('g'),parens(argument));
+
   return {
     slopeFormula,
     updateFormula,
@@ -83,6 +86,11 @@ const MathView = (() => {
     countFormula: () => line(id('N'),equal(),ceil(frac(distance(),id('h')))),
     stepFormula: () => line(id('h'),equal(),frac(distance(),id('N'))),
     signedStep: () => line(h(),equal(),next('x'),minus(),x()),
+    errorFormula: () => line(errorIndex(),equal(),absolute(row(referenceAt(next('x')),minus(),next('y')))),
+    errorValue: (atX,reference,approximation,error) => [
+      line(referenceAt(value(atX)),op('≈'),value(reference)),
+      line(errorIndex(),op('≈'),absolute(row(value(reference),minus(),factor(approximation))),op('≈'),value(error)),
+    ],
     actualCount: (from,to,step,count) => line(id('N'),equal(),ceil(frac(absolute(row(value(to),minus(),factor(from))),value(step))),equal(),num(count)),
     actualStep: (from,to,count,step) => line(id('h'),equal(),frac(absolute(row(value(to),minus(),factor(from))),num(count)),op('≈'),value(step)),
   };

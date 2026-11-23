@@ -9,7 +9,7 @@ Calculadora web en español para problemas de valor inicial de primer orden, de 
 1. Escribe `f(x, y)` con el teclado del dispositivo o con el teclado matemático de la página.
 2. Completa `x inicial`, `y inicial` y `x final`. Define un paso `h` positivo o elige entre 1 y 1.000 iteraciones para que la aplicación calcule `h`.
 3. Selecciona **Euler explícito**, **Runge–Kutta de cuarto orden** o **Comparar ambos** y pulsa **Calcular solución**.
-4. Usa la tabla y la gráfica para comparar resultados. En **Desarrollo paso a paso**, elige una iteración para ver cada evaluación de la pendiente y el cálculo de `yₙ₊₁`.
+4. Usa la tabla y la gráfica para comparar resultados. En **Desarrollo paso a paso**, elige una iteración para ver cada evaluación de la pendiente y el cálculo de `yₙ₊₁`. Con una solución exacta `g(x)`, también verás `|g(xₙ₊₁) − yₙ₊₁|`, sus sustituciones y el error por fila. Los ejemplos incluyen la referencia automáticamente.
 
 La sección **Fórmulas** explica el número de iteraciones, el paso efectivo y cómo se obtiene cada aproximación. La guía y el desarrollo muestran fracciones y subíndices con MathML nativo. El selector de tema conserva tu elección en el navegador.
 

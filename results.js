@@ -2,11 +2,13 @@
 
 const TrayectoriaResults = (() => {
   const {byId, labels, seriesColor, fmt, element} = TrayectoriaUI;
+  const fmtOperand = number => String(Number(number.toPrecision(16)));
 
   function renderStep(current) {
     const index = Number(byId('jump').value);
     const previous = current.rows[index-1];
     const row = current.rows[index];
+    const comparison = current.comparison?.[index];
     byId('previous-step').disabled = index === 1;
     byId('next-step').disabled = index === current.rows.length-1;
     const cards = element('div',undefined,'formula-grid');
@@ -27,6 +29,12 @@ const TrayectoriaResults = (() => {
         ...MathView.substitution(key,fmt(y),fmt(row.h),stages.map(stage=>fmt(stage.value)),fmt(next)),
       );
       card.append(update);
+      if (comparison) {
+        const error = element('div',undefined,'formula-update absolute-error');
+        error.append(element('h4','Error absoluto'),MathView.errorFormula(),
+          ...MathView.errorValue(fmt(row.x),fmtOperand(comparison.reference),fmtOperand(next),fmt(comparison.errors[key])));
+        card.append(error);
+      }
       cards.append(card);
     }
     byId('steps').replaceChildren(
@@ -37,9 +45,10 @@ const TrayectoriaResults = (() => {
   }
 
   function render(current) {
-    const {methods,rows,nominalStep,input} = current;
+    const {methods,rows,nominalStep,input,comparison,reference,referenceIssue} = current;
     const count = rows.length-1;
     const last = rows.at(-1);
+    const lastComparison = comparison?.at(-1);
     const stepWasAdjusted = Math.abs(Math.abs(last.h)-nominalStep) > Math.abs(nominalStep)*1e-12;
     byId('result').hidden = false;
     byId('walkthrough').hidden = false;
@@ -55,16 +64,27 @@ const TrayectoriaResults = (() => {
       const metric = element('div',undefined,'metric');
       metric.style.setProperty('--series',seriesColor(key));
       metric.append(element('small',labels[key]),element('strong',fmt(last[key].next)));
+      if (lastComparison) metric.append(element('small',`Error absoluto ${fmt(lastComparison.errors[key])}`,'metric-error'));
       return metric;
     });
     byId('values').replaceChildren(...metrics);
+    const context = byId('comparison');
+    context.classList.toggle('comparison-error',Boolean(referenceIssue));
+    if (lastComparison) {
+      context.replaceChildren(element('strong','Solución exacta'),element('code',`g(x) = ${reference}`),
+        element('span',`g(${fmt(last.x)}) ≈ ${fmt(lastComparison.reference)}`));
+    } else {
+      context.textContent = referenceIssue || 'Agrega una solución exacta para ver el error absoluto.';
+    }
     byId('legend').replaceChildren(...methods.map(key => {
       const legend = element('span',labels[key]);
       legend.style.setProperty('--series',seriesColor(key));
       return legend;
     }));
     const header = element('tr');
-    for (const title of ['n','x',...methods.map(key=>labels[key])]) {
+    const columns = ['n','x',...methods.map(key=>labels[key])];
+    if (comparison) columns.push('Valor exacto', ...methods.map(key => key==='euler' ? 'Error Euler' : 'Error RK4'));
+    for (const title of columns) {
       const cell = element('th',title);
       cell.scope='col';
       header.append(cell);
@@ -74,7 +94,9 @@ const TrayectoriaResults = (() => {
     const tbody = element('tbody');
     rows.forEach((row,i) => {
       const tr = element('tr');
-      for (const value of [i,row.x,...methods.map(key=>row[key].next)]) tr.append(element('td',fmt(value)));
+      const values = [i,row.x,...methods.map(key=>row[key].next)];
+      if (comparison) values.push(comparison[i].reference,...methods.map(key=>comparison[i].errors[key]));
+      for (const value of values) tr.append(element('td',fmt(value)));
       tbody.append(tr);
     });
     byId('iterations').replaceChildren(thead,tbody);
@@ -90,6 +112,7 @@ const TrayectoriaResults = (() => {
       );
     }
     byId('guide-count').append(MathView.countFormula(),MathView.stepFormula(),MathView.signedStep());
+    byId('guide-error').append(MathView.errorFormula());
   }
 
   return {render, renderStep, renderGuide};

@@ -5,7 +5,7 @@ const Ode = (() => {
   const functions = {sin:Math.sin, cos:Math.cos, tan:Math.tan, exp:Math.exp,
     log:Math.log, ln:Math.log, sqrt:Math.sqrt, abs:Math.abs};
 
-  function compile(source) {
+  function compile(source, {allowY = true} = {}) {
     if (typeof source !== 'string' || source.length > 160) throw new Error('La expresión admite hasta 160 caracteres.');
     const formula = source.toLowerCase().replaceAll('−','-').replaceAll('×','*').replaceAll('÷','/').replaceAll('π','pi');
     const tokens = formula.match(/(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?|[a-z]+|[^\s]/g) || [];
@@ -27,7 +27,10 @@ const Ode = (() => {
         return token === '-' ? (x,y) => -inner(x,y) : inner;
       }
       if (token === 'x') return x => x;
-      if (token === 'y') return (_x,y) => y;
+      if (token === 'y') {
+        if (!allowY) throw new Error('La solución de referencia debe depender solo de x.');
+        return (_x,y) => y;
+      }
       if (token === 'pi') return () => Math.PI;
       if (token === 'e') return () => Math.E;
       if (Object.hasOwn(functions,token)) {
@@ -124,7 +127,21 @@ const Ode = (() => {
     return {methods,rows,nominalStep};
   }
 
-  return {compile,solve};
+  function compareReference({methods,rows}, expression, initialY) {
+    const evaluate = compile(expression, {allowY:false});
+    return rows.map((row,index) => {
+      const reference = evaluate(row.x);
+      if (!Number.isFinite(reference)) throw new Error(`La referencia no es finita en la fila ${index}.`);
+      if (index === 0 && Math.abs(reference - initialY) > 1e-9*Math.max(1,Math.abs(reference),Math.abs(initialY))) {
+        throw new Error('La referencia debe cumplir g(x inicial) = y inicial.');
+      }
+      const errors = Object.fromEntries(methods.map(key => [key,Math.abs(reference - row[key].next)]));
+      if (!Object.values(errors).every(Number.isFinite)) throw new Error(`El error absoluto excede el rango numérico en la fila ${index}.`);
+      return {reference,errors};
+    });
+  }
+
+  return {compile,solve,compareReference};
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = Ode;

@@ -32,6 +32,10 @@ if ($method === 'POST') {
         !in_array($input['method'] ?? null, ['euler', 'rk4', 'both'], true)) {
         respond(422, ['error' => 'El cálculo contiene datos no válidos.']);
     }
+    if (array_key_exists('exact', $input) && (!is_string($input['exact']) || strlen($input['exact']) > 640 ||
+        preg_match('/\A[0-9a-zA-Zπ×÷−+*\/^().\-\s]*\z/u', $input['exact']) !== 1)) {
+        respond(422, ['error' => 'La referencia contiene datos no válidos.']);
+    }
     foreach (['x0', 'y0', 'end'] as $key) {
         $value = $input[$key] ?? null;
         if ((!is_int($value) && !is_float($value)) || !is_finite((float) $value)) {
@@ -56,7 +60,7 @@ if ($method === 'POST') {
             respond(422, ['error' => 'El paso está fuera del rango admitido.']);
         }
     }
-    $input = array_intersect_key($input, array_flip(['equation', 'method', 'x0', 'y0', 'end', $parameter]));
+    $input = array_intersect_key($input, array_flip(['equation', 'exact', 'method', 'x0', 'y0', 'end', $parameter]));
 }
 
 // The configuration lives outside the web root and is never served to visitors.
